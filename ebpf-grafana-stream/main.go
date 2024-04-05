@@ -8,26 +8,10 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strconv"
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
 )
-
-/*
-struct packetDetails
-{
-    unsigned char l2_src_addr[6];
-    unsigned char l2_dst_addr[6];
-    unsigned int l3_src_addr;
-    unsigned int l3_dst_addr;
-    unsigned int l3_protocol;
-    unsigned int l3_length;
-    unsigned int l3_ttl;
-    unsigned int l3_version;
-
-};
-*/
 
 type packetDetails struct {
 	L2_src_addr [6]byte
@@ -91,46 +75,25 @@ func main() {
 			err = binary.Read(byteReader, binary.LittleEndian, &packet)
 			if err != nil {
 				log.Printf("Unable to marshall to struct: %v", err)
-
 			}
 
-			fmt.Println(packet.L2_src_addr)
+			sourceMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_src_addr[0], packet.L2_src_addr[1], packet.L2_src_addr[2], packet.L2_src_addr[3], packet.L2_src_addr[4], packet.L2_src_addr[5])
+			destinationMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_dst_addr[0], packet.L2_dst_addr[1], packet.L2_dst_addr[2], packet.L2_dst_addr[3], packet.L2_dst_addr[4], packet.L2_dst_addr[5])
 
-			mac, err := decimalToMAC((string(packet.L2_src_addr[:])))
-			if err != nil {
-				fmt.Println("Error:", err)
-				return
-			}
+			sourceIP := net.IPv4(byte(packet.L3_src_addr), byte(packet.L3_src_addr>>8), byte(packet.L3_src_addr>>16), byte(packet.L3_src_addr>>24)).String()
+			destIP := net.IPv4(byte(packet.L3_dst_addr), byte(packet.L3_dst_addr>>8), byte(packet.L3_dst_addr>>16), byte(packet.L3_dst_addr>>24)).String()
 
-			fmt.Println(mac)
+			protocolName := protocolNumberToName(packet.L3_protocol)
+			l3PacketLength := packet.L3_length
+
+			l3TTL := packet.L3_ttl
+			l3Version := packet.L3_version
+
+			fmt.Println(sourceMacAddress, destinationMacAddress, sourceIP, destIP, protocolName, l3PacketLength, l3TTL, l3Version)
 
 		}
 
 	}
-}
-
-func decimalToMAC(decimalString string) (string, error) {
-	// Step 1: Parse the decimal string to an integer
-	num, err := strconv.ParseUint(decimalString, 10, 64)
-	if err != nil {
-		return "", err // Handle the error if the string is not a valid number
-	}
-
-	// Step 2: Convert the integer to its byte representation
-	macBytes := []byte{
-		byte(num >> 40),
-		byte(num >> 32 & 0xFF),
-		byte(num >> 24 & 0xFF),
-		byte(num >> 16 & 0xFF),
-		byte(num >> 8 & 0xFF),
-		byte(num & 0xFF),
-	}
-
-	// Step 3: Format the bytes into a MAC address string
-	mac := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x",
-		macBytes[0], macBytes[1], macBytes[2], macBytes[3], macBytes[4], macBytes[5])
-
-	return mac, nil
 }
 
 func protocolNumberToName(protocolNumber uint32) string {
@@ -161,11 +124,5 @@ func protocolNumberToName(protocolNumber uint32) string {
 		255: "Reserved",
 	}
 
-	for k, v := range protocols {
-		if k == int(protocolNumber) {
-			return v
-		}
-	}
-
-	return "unknown"
+	return protocols[int(protocolNumber)]
 }

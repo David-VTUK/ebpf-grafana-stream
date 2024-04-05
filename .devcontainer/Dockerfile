@@ -23,5 +23,4 @@ RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
 RUN apt install -y libcap-dev
 RUN ln -sf /usr/local/go/bin/go /bin/go
 
-RUN cp /usr/include/x86_64-linux-gnu/asm/byteorder.h /usr/include/asm
 RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
