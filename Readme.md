@@ -4,7 +4,7 @@
 
 This project leverages eBPF and [Grafana Live Streams](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-grafana-live/), to demonstrate near real-time observability of network traffic.
 
-![Image depicting intended architecture](/Images/ebpf-diagram-transparent.drawio.png)
+![Image depicting intended architecture](/images/ebpf-diagram-transparent.drawio.png)
 
 ## EBPF App
 
