@@ -1,0 +1,25 @@
+{
+	"name": "Go-ebpf-env",
+	"build": {"dockerfile": "Dockerfile"},
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"streetsidesoftware.code-spell-checker",
+				"ms-vscode.cpptools",
+				"nicknickolaev.ebpf-assembly",
+				"golang.Go"
+			]
+		}
+	},
+
+	// Extra args to enable compatibility between Flatpak vscode and podman
+	"runArgs": ["--privileged","--network=host"],
+	"privileged": true,
+	//"containerUser": "vscode",
+    "workspaceFolder": "/workspace",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind"
+}
