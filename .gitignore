@@ -73,3 +73,10 @@ dkms.conf
 
 # Go workspace file
 go.work
+
+# Binary
+ebpf-grafana-stream/ebpf-grafana-stream
+
+# Generated code
+ebpf-grafana-stream/packetdetails_bpfeb.go
+ebpf-grafana-stream/packetdetails_bpfel.go
