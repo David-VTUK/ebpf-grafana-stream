@@ -1,5 +1,7 @@
 github.com/cilium/ebpf v0.14.0 h1:0PsxAjO6EjI1rcT+rkp6WcCnE0ZvfkXBYiMedJtrSUs=
 github.com/cilium/ebpf v0.14.0/go.mod h1:DHp1WyrLeiBh19Cf/tfiSMhqheEiK8fXFZ4No0P1Hso=
+github.com/david-vtuk/ebpf-grafana-stream v0.0.0-20240406180327-1b65d695d6ee h1:JWmK3K6AsrqqFiaVl0lvD0AqGwJIhL9CZ4kC9Eq1NFY=
+github.com/david-vtuk/ebpf-grafana-stream v0.0.0-20240406180327-1b65d695d6ee/go.mod h1:zI1CoJcLX2ahlqrb2HaRHTbGFzxuw+Nq8amAH6T53k0=
 github.com/go-quicktest/qt v1.101.0 h1:O1K29Txy5P2OK0dGo59b7b0LR6wKfIhttaAhHUyn7eI=
 github.com/go-quicktest/qt v1.101.0/go.mod h1:14Bz/f7NwaXPtdYEgzsx46kqSxVwTbzVZsDC26tQJow=
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=

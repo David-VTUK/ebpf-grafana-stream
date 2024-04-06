@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
+	"github.com/david-vtuk/ebpf-grafana-stream/ebpf-grafana-stream/pkg/netprotocols"
 )
 
 type packetDetails struct {
@@ -77,21 +80,57 @@ func main() {
 				log.Printf("Unable to marshall to struct: %v", err)
 			}
 
-			sourceMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_src_addr[0], packet.L2_src_addr[1], packet.L2_src_addr[2], packet.L2_src_addr[3], packet.L2_src_addr[4], packet.L2_src_addr[5])
-			destinationMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_dst_addr[0], packet.L2_dst_addr[1], packet.L2_dst_addr[2], packet.L2_dst_addr[3], packet.L2_dst_addr[4], packet.L2_dst_addr[5])
-
-			sourceIP := net.IPv4(byte(packet.L3_src_addr), byte(packet.L3_src_addr>>8), byte(packet.L3_src_addr>>16), byte(packet.L3_src_addr>>24)).String()
-			destIP := net.IPv4(byte(packet.L3_dst_addr), byte(packet.L3_dst_addr>>8), byte(packet.L3_dst_addr>>16), byte(packet.L3_dst_addr>>24)).String()
-
-			protocolName := protocolNumberToName(packet.L3_protocol)
-			l3PacketLength := packet.L3_length
-
-			l3TTL := packet.L3_ttl
-			l3Version := packet.L3_version
-
-			fmt.Println(sourceMacAddress, destinationMacAddress, sourceIP, destIP, protocolName, l3PacketLength, l3TTL, l3Version)
+			sendToGrafana(packet)
 
 		}
 
 	}
+}
+
+func sendToGrafana(packet packetDetails) error {
+
+	//Convert MAC address from Decimal to HEX
+	sourceMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_src_addr[0], packet.L2_src_addr[1], packet.L2_src_addr[2], packet.L2_src_addr[3], packet.L2_src_addr[4], packet.L2_src_addr[5])
+	destinationMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_dst_addr[0], packet.L2_dst_addr[1], packet.L2_dst_addr[2], packet.L2_dst_addr[3], packet.L2_dst_addr[4], packet.L2_dst_addr[5])
+
+	//Convert IP address from Decimal to IPv4
+	sourceIP := net.IPv4(byte(packet.L3_src_addr), byte(packet.L3_src_addr>>8), byte(packet.L3_src_addr>>16), byte(packet.L3_src_addr>>24)).String()
+	destIP := net.IPv4(byte(packet.L3_dst_addr), byte(packet.L3_dst_addr>>8), byte(packet.L3_dst_addr>>16), byte(packet.L3_dst_addr>>24)).String()
+
+	//Convert Protocol number to name
+	protocolName := netprotocols.Translate(int(packet.L3_protocol))
+
+	//Create Telegraph message
+	telegrafMessage := fmt.Sprintf("packet_details source_mac=\"%s\",destination_mac=\"%s\",source_ip=\"%s\",destination_ip=\"%s\",protocol=\"%s\",length=%di,ttl=%di,version=%di", sourceMacAddress, destinationMacAddress, sourceIP, destIP, protocolName, packet.L3_length, packet.L3_ttl, packet.L3_version)
+
+	fmt.Println(telegrafMessage)
+
+	//http post to grafana
+	req, err := http.NewRequest("POST", "grafanaurl", strings.NewReader(telegrafMessage))
+	if err != nil {
+		log.Printf("Failed to create HTTP request: %v", err)
+		return err
+	}
+
+	// Add bearer token to the request header
+	req.Header.Set("Authorization", "Bearer $token")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Failed to send HTTP request: %v", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	fmt.Println(resp)
+
+	if err != nil {
+		log.Printf("Unable post to Grafana %v", err)
+	} else {
+		defer resp.Body.Close()
+	}
+
+	fmt.Println(resp)
+
+	return nil
 }
