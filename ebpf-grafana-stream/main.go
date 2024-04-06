@@ -95,34 +95,3 @@ func main() {
 
 	}
 }
-
-func protocolNumberToName(protocolNumber uint32) string {
-	var protocols = map[int]string{
-		1:   "ICMP",
-		2:   "IGMP",
-		3:   "GGP",
-		4:   "IP-in-IP",
-		5:   "ST",
-		6:   "TCP",
-		7:   "CBT",
-		8:   "EGP",
-		9:   "IGP",
-		10:  "BBN-RCC-MON",
-		11:  "NVP-II",
-		12:  "PUP",
-		13:  "ARGUS",
-		14:  "EMCON",
-		15:  "XNET",
-		16:  "CHAOS",
-		17:  "UDP",
-		18:  "MUX",
-		19:  "DCN-MEAS",
-		20:  "HMP",
-		21:  "PRM",
-		22:  "XNS-IDP",
-		23:  "TRUNK-1",
-		255: "Reserved",
-	}
-
-	return protocols[int(protocolNumber)]
-}
