@@ -13,7 +13,7 @@ import (
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
-	"github.com/david-vtuk/ebpf-grafana-stream/ebpf-grafana-stream/pkg/netprotocols"
+	"github.com/david-vtuk/ebpf-grafana-stream/pkg/netprotocols"
 )
 
 type packetDetails struct {
