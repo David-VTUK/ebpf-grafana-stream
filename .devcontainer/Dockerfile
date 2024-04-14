@@ -19,6 +19,7 @@ RUN apt install -y libpcap-dev
 RUN apt install -y libcap-ng-dev
 RUN apt install -y libbfd-dev
 RUN apt install -y gcc-multilib
+RUN apt install -y m4
 RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
 RUN apt install -y libcap-dev
 RUN ln -sf /usr/local/go/bin/go /bin/go
