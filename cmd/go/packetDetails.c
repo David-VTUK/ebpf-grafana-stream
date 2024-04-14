@@ -18,17 +18,18 @@ struct {
 
 struct packetDetails
 {
-    char l2_src_addr[6];
-    char l2_dst_addr[6];
+    unsigned char l2_src_addr[6];
+    unsigned char l2_dst_addr[6];
     unsigned int l3_src_addr;
     unsigned int l3_dst_addr;
     unsigned int l3_protocol;
     unsigned int l3_length;
     unsigned int l3_ttl;
     unsigned int l3_version;
-    char l4_protocol[4];
-    unsigned int l4_src_port;
-    unsigned int l4_dst_port;
+   // char l4_protocol[4];
+    uint16_t l4_src_port;
+    uint16_t l4_dst_port;
+
 };
 
 SEC("xdp")
@@ -54,28 +55,10 @@ int packet_details(struct xdp_md *ctx) {
     if ((void *)(ip + 1) > data_end)
         return XDP_PASS;
 
-    // Extract TCP or UDP header
-    if (ip->protocol == IPPROTO_TCP) {
-        tcp = (struct tcphdr *)(ip + 1);
-        strcpy(packet->l4_protocol, "TCP");
-        packet->l4_src_port = tcp->source;
-        packet->l4_dst_port = tcp->dest;
-    } else if (ip->protocol == IPPROTO_UDP) {
-        udp = (struct udphdr *)(ip + 1);
-        strcpy(packet->l4_protocol, "UDP");
-        packet->l4_src_port = udp->source;
-        packet->l4_dst_port = udp->dest;
-    }
+
+     bpf_printk("LOGGING PACKET DETAILS\n");
 
 
-    memcpy(packet->l2_dst_addr, eth->h_dest, 6);
-    memcpy(packet->l2_src_addr, eth->h_source,6);
-    packet->l3_src_addr = ip->saddr;
-    packet->l3_dst_addr = ip->daddr;
-    packet->l3_protocol = ip->protocol;
-    packet->l3_length = ip->tot_len;
-    packet->l3_ttl = ip->ttl;
-    packet->l3_version = ip->version;
 
     // Reserve space in the ring buffer
     packet = bpf_ringbuf_reserve(&rb,sizeof(*packet), 0);
@@ -87,9 +70,22 @@ int packet_details(struct xdp_md *ctx) {
         return XDP_PASS;
     }
 
+
+
+
+    memcpy(packet->l2_dst_addr, eth->h_dest, 6);
+    memcpy(packet->l2_src_addr, eth->h_source,6);
+    packet->l3_src_addr = ip->saddr;
+    packet->l3_dst_addr = ip->daddr;
+    packet->l3_protocol = ip->protocol;
+    packet->l3_length = ip->tot_len;
+    packet->l3_ttl = ip->ttl;
+    packet->l3_version = ip->version;
+
     bpf_ringbuf_submit(packet, 0);
 
     return XDP_PASS;
+
 }
 
 

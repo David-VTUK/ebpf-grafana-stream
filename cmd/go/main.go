@@ -25,22 +25,9 @@ type packetDetails struct {
 	L3_length   uint32
 	L3_ttl      uint32
 	L3_version  uint32
-	L4_src_port uint16
-	L4_dst_port uint16
-	L4_protocol [4]byte
 }
 
 func main() {
-
-	// Read environment variables
-	grafanaURL := os.Getenv("GRAFANA_URL")
-	grafanaToken := os.Getenv("GRAFANA_TOKEN")
-	networkInterface := os.Getenv("INTERFACE")
-
-	if grafanaURL == "" || grafanaToken == "" || networkInterface == "" {
-		fmt.Println("URL", grafanaURL, "Token", grafanaToken, "Interface", networkInterface)
-		log.Fatal("Environment variables not set. Please set GRAFANA_URL, GRAFANA_TOKEN and INTERFACE")
-	}
 
 	var objs packetDetailsObjects
 	if err := loadPacketDetailsObjects(&objs, nil); err != nil {
@@ -50,13 +37,14 @@ func main() {
 
 	ring, err := ringbuf.NewReader(objs.Rb)
 	if err != nil {
-		log.Fatalf("Unable to open ring buffer: %s", err)
+		log.Fatal("Unable to open ring buffer")
 	}
 	defer ring.Close()
 
-	iface, err := net.InterfaceByName(networkInterface)
+	ifname := "enp1s0"
+	iface, err := net.InterfaceByName(ifname)
 	if err != nil {
-		log.Fatalf("Getting interface %s: %s", networkInterface, err)
+		log.Fatalf("Getting interface %s: %s", ifname, err)
 	}
 
 	// Attach packetDetails to the network interface
@@ -87,23 +75,26 @@ func main() {
 
 			var packet packetDetails
 			byteReader := bytes.NewReader(e.RawSample)
+
 			err = binary.Read(byteReader, binary.LittleEndian, &packet)
 			if err != nil {
 				log.Printf("Unable to marshall to struct: %v", err)
 			}
 
-			sendToGrafana(packet, grafanaURL, grafanaToken)
+			fmt.Println(packet)
+
+			//sendToGrafana(packet)
 
 		}
 
 	}
 }
 
-func sendToGrafana(packet packetDetails, grafanaURL string, grafanaToken string) error {
+func sendToGrafana(packet packetDetails) error {
 
 	//Convert MAC address from Decimal to HEX
 	sourceMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_src_addr[0], packet.L2_src_addr[1], packet.L2_src_addr[2], packet.L2_src_addr[3], packet.L2_src_addr[4], packet.L2_src_addr[5])
-	destinationMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_dst_addr[0], packet.L2_dst_addr[1], packet.L2_dst_addr[2], packet.L2_dst_addr[3], packet.L2_dst_addr[4], packet.L2_dst_addr[5]) //"packet_details source_mac=\"%s\"
+	destinationMacAddress := fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", packet.L2_dst_addr[0], packet.L2_dst_addr[1], packet.L2_dst_addr[2], packet.L2_dst_addr[3], packet.L2_dst_addr[4], packet.L2_dst_addr[5])
 
 	//Convert IP address from Decimal to IPv4
 	sourceIP := net.IPv4(byte(packet.L3_src_addr), byte(packet.L3_src_addr>>8), byte(packet.L3_src_addr>>16), byte(packet.L3_src_addr>>24)).String()
@@ -113,24 +104,19 @@ func sendToGrafana(packet packetDetails, grafanaURL string, grafanaToken string)
 	protocolName := netprotocols.Translate(int(packet.L3_protocol))
 
 	//Create Telegraph message
-	telegrafMessage := fmt.Sprintf("packet_details source_mac=\"%s\",destination_mac=\"%s\",source_ip=\"%s\",destination_ip=\"%s\",protocol=\"%s\",length=%di,ttl=%di,version=%di, source_port=%di, destination_port=%di, protocol=\"%s\"\n",
-		sourceMacAddress, destinationMacAddress, sourceIP, destIP, protocolName, packet.L3_length, packet.L3_ttl, packet.L3_version, packet.L4_src_port, packet.L4_dst_port, packet.L4_protocol)
+	telegrafMessage := fmt.Sprintf("packet_details source_mac=\"%s\",destination_mac=\"%s\",source_ip=\"%s\",destination_ip=\"%s\",protocol=\"%s\",length=%di,ttl=%di,version=%di", sourceMacAddress, destinationMacAddress, sourceIP, destIP, protocolName, packet.L3_length, packet.L3_ttl, packet.L3_version)
+
+	fmt.Println(telegrafMessage)
 
 	//http post to grafana
-	req, err := http.NewRequest("POST", grafanaURL, strings.NewReader(telegrafMessage))
+	req, err := http.NewRequest("POST", "grafanaurl", strings.NewReader(telegrafMessage))
 	if err != nil {
 		log.Printf("Failed to create HTTP request: %v", err)
 		return err
 	}
 
-	//fmt.Println(packet.L3_ttl)
-
-	if packet.L3_ttl == 1 {
-		fmt.Println(telegrafMessage)
-	}
-
 	// Add bearer token to the request header
-	req.Header.Set("Authorization", "Bearer "+grafanaToken)
+	req.Header.Set("Authorization", "Bearer $token")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -138,6 +124,16 @@ func sendToGrafana(packet packetDetails, grafanaURL string, grafanaToken string)
 		return err
 	}
 	defer resp.Body.Close()
+
+	fmt.Println(resp)
+
+	if err != nil {
+		log.Printf("Unable post to Grafana %v", err)
+	} else {
+		defer resp.Body.Close()
+	}
+
+	fmt.Println(resp)
 
 	return nil
 }

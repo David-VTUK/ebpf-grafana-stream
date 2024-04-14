@@ -31,3 +31,7 @@ RUN git clone --recurse-submodules https://github.com/libbpf/bpftool.git
 RUN make -C bpftool/src/ install
 RUN git clone --recurse-submodules https://github.com/xdp-project/xdp-tools.git
 RUN make -C xdp-tools/ install
+
+
+# Enable debugfs to read messages from bpf_printk
+RUN mount -t debugfs none /sys/kernel/debug
