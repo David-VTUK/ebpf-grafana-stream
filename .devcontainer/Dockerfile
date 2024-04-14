@@ -22,5 +22,11 @@ RUN apt install -y gcc-multilib
 RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
 RUN apt install -y libcap-dev
 RUN ln -sf /usr/local/go/bin/go /bin/go
-
 RUN ln -sf /usr/include/asm-generic/ /usr/include/asm
+
+RUN mkdir /sources/
+WORKDIR /sources/
+RUN git clone --recurse-submodules https://github.com/libbpf/bpftool.git
+RUN make -C bpftool/src/ install
+RUN git clone --recurse-submodules https://github.com/xdp-project/xdp-tools.git
+RUN make -C xdp-tools/ install
