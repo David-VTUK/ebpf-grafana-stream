@@ -11,7 +11,8 @@
 				"streetsidesoftware.code-spell-checker",
 				"ms-vscode.cpptools",
 				"nicknickolaev.ebpf-assembly",
-				"golang.Go"
+				"golang.Go",
+				"GitHub.copilot"
 			]
 		}
 	},

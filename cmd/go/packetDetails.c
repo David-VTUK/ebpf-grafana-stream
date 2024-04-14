@@ -55,9 +55,23 @@ int packet_details(struct xdp_md *ctx) {
     if ((void *)(ip + 1) > data_end)
         return XDP_PASS;
 
+    // Verify that the IP packet contains a TCP or UDP packet
+    if (ip->protocol != IPPROTO_TCP && ip->protocol != IPPROTO_UDP)
+        return XDP_PASS;
 
-     bpf_printk("LOGGING PACKET DETAILS\n");
+    // Move past the IP header to get the TCP or UDP header
+    if (ip->protocol == IPPROTO_TCP) {
+        tcp = (void *)ip + sizeof(*ip);
+        if ((void *)(tcp + 1) > data_end)
+            return XDP_PASS;
+    } else {
+        udp = (void *)ip + sizeof(*ip);
+        if ((void *)(udp + 1) > data_end)
+            return XDP_PASS;
+    }
 
+
+    bpf_printk("Source port: %u\n", ntohs(tcp->dest));
 
 
     // Reserve space in the ring buffer
