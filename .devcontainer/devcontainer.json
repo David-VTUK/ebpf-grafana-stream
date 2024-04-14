@@ -9,6 +9,7 @@
 			"settings": {},
 			"extensions": [
 				"streetsidesoftware.code-spell-checker",
+				"ms-vscode.cpptools-extension-pack",
 				"ms-vscode.cpptools",
 				"nicknickolaev.ebpf-assembly",
 				"golang.Go",

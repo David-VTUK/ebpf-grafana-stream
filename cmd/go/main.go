@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
@@ -25,9 +23,31 @@ type packetDetails struct {
 	L3_length   uint32
 	L3_ttl      uint32
 	L3_version  uint32
+	L4_src_port uint32
+	L4_dst_port uint32
 }
 
 func main() {
+
+	/*
+		grafanaURL := os.Getenv("GRAFANA_URL")
+		grafanaToken := os.Getenv("GRAFANA_TOKEN")
+		interfaceName := os.Getenv("INTERFACE_NAME")
+
+		if grafanaURL == "" {
+			log.Fatal("GRAFANA_URL is not set")
+		}
+
+		if grafanaToken == "" {
+			log.Fatal("GRAFANA_TOKEN is not set")
+		}
+
+		if interfaceName == "" {
+			log.Fatal("INTERFACE_NAME is not set")
+		}
+	*/
+
+	interfaceName := "enp1s0"
 
 	var objs packetDetailsObjects
 	if err := loadPacketDetailsObjects(&objs, nil); err != nil {
@@ -41,10 +61,9 @@ func main() {
 	}
 	defer ring.Close()
 
-	ifname := "enp1s0"
-	iface, err := net.InterfaceByName(ifname)
+	iface, err := net.InterfaceByName(interfaceName)
 	if err != nil {
-		log.Fatalf("Getting interface %s: %s", ifname, err)
+		log.Fatalf("Getting interface %s: %s", interfaceName, err)
 	}
 
 	// Attach packetDetails to the network interface
@@ -72,7 +91,6 @@ func main() {
 				log.Printf("Error reading from ring buffer: %v", err)
 				continue
 			}
-
 			var packet packetDetails
 			byteReader := bytes.NewReader(e.RawSample)
 
@@ -81,9 +99,7 @@ func main() {
 				log.Printf("Unable to marshall to struct: %v", err)
 			}
 
-			fmt.Println(packet)
-
-			//sendToGrafana(packet)
+			sendToGrafana(packet)
 
 		}
 
@@ -104,36 +120,29 @@ func sendToGrafana(packet packetDetails) error {
 	protocolName := netprotocols.Translate(int(packet.L3_protocol))
 
 	//Create Telegraph message
-	telegrafMessage := fmt.Sprintf("packet_details source_mac=\"%s\",destination_mac=\"%s\",source_ip=\"%s\",destination_ip=\"%s\",protocol=\"%s\",length=%di,ttl=%di,version=%di", sourceMacAddress, destinationMacAddress, sourceIP, destIP, protocolName, packet.L3_length, packet.L3_ttl, packet.L3_version)
+	telegrafMessage := fmt.Sprintf("packet_details source_mac=\"%s\",destination_mac=\"%s\",source_ip=\"%s\",destination_ip=\"%s\",protocol=\"%s\",length=%di,ttl=%di,version=%di,source_port=%di,destination_port=%di\n",
+		sourceMacAddress, destinationMacAddress, sourceIP, destIP, protocolName, packet.L3_length, packet.L3_ttl, packet.L3_version, packet.L4_src_port, packet.L4_dst_port)
 
-	fmt.Println(telegrafMessage)
+	println(telegrafMessage)
 
-	//http post to grafana
-	req, err := http.NewRequest("POST", "grafanaurl", strings.NewReader(telegrafMessage))
-	if err != nil {
-		log.Printf("Failed to create HTTP request: %v", err)
-		return err
-	}
+	/*
+		//http post to grafana
+		req, err := http.NewRequest("POST", grafanaURL, strings.NewReader(telegrafMessage))
+		if err != nil {
+			log.Printf("Failed to create HTTP request: %v", err)
+			return err
+		}
 
-	// Add bearer token to the request header
-	req.Header.Set("Authorization", "Bearer $token")
+		// Add bearer token to the request header
+		req.Header.Set("Authorization", "Bearer "+grafanaToken)
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Printf("Failed to send HTTP request: %v", err)
-		return err
-	}
-	defer resp.Body.Close()
-
-	fmt.Println(resp)
-
-	if err != nil {
-		log.Printf("Unable post to Grafana %v", err)
-	} else {
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			log.Printf("Failed to send HTTP request: %v", err)
+			return err
+		}
 		defer resp.Body.Close()
-	}
-
-	fmt.Println(resp)
+	*/
 
 	return nil
 }
