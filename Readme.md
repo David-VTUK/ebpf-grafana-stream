@@ -30,4 +30,4 @@ go run .
 
 ## Grafana visualisation example
 
-![Dashboard Video](./images/output.webm)
+![Dashboard Video](./images/dashboard.gif)
