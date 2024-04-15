@@ -39,7 +39,6 @@ int packet_details(struct xdp_md *ctx) {
     struct iphdr *ip;
     struct udphdr *udp;
     struct tcphdr *tcp;
-
     struct packetDetails *packet;
 
     // Reserve space in the ring buffer

@@ -12,3 +12,13 @@ On the eBPF side, there are two components:
 
 * An eBPF application that leverages `xdp` to get gather packet information (stored into a map).
 * A Go based User Space application that reads the map and forwards information to a Grafana dashboards (which auto updates.)
+
+## How to Run
+
+```
+cd /cmd/go
+
+go generate
+
+go run .
+```
