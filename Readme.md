@@ -16,6 +16,11 @@ On the eBPF side, there are two components:
 ## How to Run
 
 ```
+
+export GRAFANA_TOKEN="YourToken"
+export GRAFANA_URL="YourURL"
+export INTERFACE_NAME="NICName"
+
 cd /cmd/go
 
 go generate
