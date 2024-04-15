@@ -6,7 +6,7 @@ This project leverages eBPF and [Grafana Live Streams](https://grafana.com/docs/
 
 ![Image depicting intended architecture](/images/ebpf-diagram-transparent.drawio.png)
 
-## EBPF App
+## eBPF App
 
 On the eBPF side, there are two components:
 
