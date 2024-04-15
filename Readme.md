@@ -27,3 +27,7 @@ go generate
 
 go run .
 ```
+
+## Grafana visualisation example
+
+![Dashboard Video](./images/dashboard.gif)
