@@ -1,6 +1,6 @@
 package netprotocols
 
-var protocolMap = map[int]string{
+var ProtocolMap = map[int]string{
 	0:   "HOPOPT",
 	1:   "ICMP",
 	2:   "IGMP",
