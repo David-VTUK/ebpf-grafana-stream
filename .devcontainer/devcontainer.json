@@ -19,9 +19,9 @@
 	},
 
 	// Extra args to enable compatibility between Flatpak vscode and podman
-	"runArgs": ["--privileged","--network=host"],
-	"privileged": true,
-	//"containerUser": "vscode",
+	//"runArgs": ["--privileged","--network=host"],
+	//"privileged": true,
+	"containerUser": "vscode",
     "workspaceFolder": "/workspace",
-	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind"
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,Z"
 }
